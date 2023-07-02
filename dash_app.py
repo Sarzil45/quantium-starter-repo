@@ -13,7 +13,7 @@ app = Dash(__name__)
 # Define the HTML layout
 app.layout = html.Div(className="main-body", children=[
     html.Div(id="heading", children=[
-        html.H1(children="Pink Morsel Sales"),
+        html.H1(id="header", children="Pink Morsel Sales"),
         html.P(children="Sale of pink morsel over time"),
     ]),
     html.Div(className="filters", children=[
@@ -30,15 +30,16 @@ app.layout = html.Div(className="main-body", children=[
         ]),
         html.Div(className="filter", children=[
             html.Label("Region"),
-            dcc.Checklist(
+            dcc.RadioItems(
                 id="region",
                 options=[
                     {"label": "North", "value": "north"},
                     {"label": "South", "value": "south"},
                     {"label": "East", "value": "east"},
                     {"label": "West", "value": "west"},
+                    {"label": "All", "value": "all"}
                 ],
-                value=["north", "south", "east", "west"],
+                value="all",
                 inline=True,
             ),
         ]),
@@ -52,6 +53,7 @@ app.layout = html.Div(className="main-body", children=[
 ])
 
 
+# Create the line chart based on the filters selected
 @callback(
     Output("line-chart", "figure"),
     Input("date-slider", "start_date"),
@@ -65,7 +67,10 @@ def make_line_chart(st_date, e_date, region):
     if e_date is None:
         e_date = df['date'].max()
     # Filter as needed
-    mask = (df['date'] >= st_date) & (df['date'] <= e_date) & df['region'].isin(region)
+    if region == "all":
+        mask = (df['date'] >= st_date) & (df['date'] <= e_date)
+    else:
+        mask = (df['date'] >= st_date) & (df['date'] <= e_date) & (df['region'] == region)
     filtered_df = df[mask]
     # Make the graph
     fig = px.line(data_frame=filtered_df, x="date", y="sales")
